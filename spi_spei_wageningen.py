@@ -84,4 +84,5 @@ spi_wageningen = SPI_1d(da_pr=da_pr)
 spei_wageningen = SPEI_1d(da_pr=da_pr, da_pet=da_pet)
 
 #%%
-spi_wageningen
+spi_wageningen.to_netcdf(spi_out)
+spei_wageningen.to_netcdf(spei_out)
