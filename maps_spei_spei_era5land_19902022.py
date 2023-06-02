@@ -23,6 +23,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import pearsonr
+
+
+
 #%%
 r_time_series = robjects.r('ts')
 SPEI_package = importr('SPEI')
@@ -33,9 +36,11 @@ tstart = '1990-01'
 tfinal='2022-12'
 
 
-data_path_era5land = '/home/evelien/Agri-SiSa/data/ERA5/ERA5land_tp_ev_soilmoisture_mm_1959_2022_NL.nc' 
+data_path_era5land = '/home/evelien/Agri-SiSa/data/ERA5/ERA5land_tp_ev_mm_1959_2022_FIN2.nc' 
+
+area_code = 'FIN2'
 #select expver=1 (niet erat (prilimilarly), maar era5=validated!)
-ds= xr.open_dataset(data_path_era5land).sel(time=(slice(tstart, tfinal)), expver=1)
+ds= xr.open_dataset(data_path_era5land).sel(time=(slice(tstart, tfinal)))
 
 #%%
 #grid settings
@@ -73,7 +78,7 @@ def pr_at_index(ds, x_ind, y_ind):
     ds2=ds.isel(longitude=x_ind,
         latitude= y_ind)
     da = ds2.tp * 1000
-    da.attrs={'units': 'mm', 'long_name': 'Total precipitation', 'data_source':'Era5Land_expver1' }
+    da.attrs={'units': 'mm', 'long_name': 'Total precipitation', 'data_source':'Era5Land' }
     
     return da
 
@@ -83,7 +88,7 @@ def pev_at_index(ds, x_ind, y_ind):
                  latitude=y_ind
                 )
     da= ds2.pev * -1000
-    da.attrs={'units': 'mm', 'long_name': 'Potential evaporation', 'data_source':'Era5Land_expver1'}
+    da.attrs={'units': 'mm', 'long_name': 'Potential evaporation', 'data_source':'Era5Land'}
     return da
 
 #%%
@@ -95,12 +100,12 @@ for x in tqdm(np.arange(xdim)):
         
         da_pr = pr_at_index(ds=ds, x_ind=x, y_ind=y)
         da_pet = pev_at_index(ds=ds, x_ind=x, y_ind=y)
-        #spi_yx = SPI_1d(da_pr=da_pr)
+        spi_yx = SPI_1d(da_pr=da_pr)
         spei_yx = SPEI_1d(da_pr=da_pr, da_pet=da_pet)
         
-        #spi1_tyx_empty[:, y, x] = spi_yx['SPI1'].values
-        #spi3_tyx_empty[:, y, x] = spi_yx['SPI3'].values
-        #spi6_tyx_empty[:, y, x] = spi_yx['SPI6'].values
+        spi1_tyx_empty[:, y, x] = spi_yx['SPI1'].values
+        spi3_tyx_empty[:, y, x] = spi_yx['SPI3'].values
+        spi6_tyx_empty[:, y, x] = spi_yx['SPI6'].values
         
         spei1_tyx_empty[:, y, x] = spei_yx['SPEI1'].values
         spei3_tyx_empty[:, y, x] = spei_yx['SPEI3'].values
@@ -144,11 +149,11 @@ ds_spi_era5land = xr.merge([da_spi1,
                            da_spi3,
                            da_spi6])
 
-ds_spi_era5land.attrs['source_variable_tp'] = 'tp: ERA5 Land Expver1 Monthly Mean Total Precipitation in mm (org tp *1000)'
+ds_spi_era5land.attrs['source_variable_tp'] = 'tp: ERA5 Land Monthly Mean Total Precipitation in mm (org tp *1000)'
 ds_spi_era5land.attrs['SPI_function'] = f'R package SPEI, distibution={distribution}, reference period {spei_ref[0]}-{spei_ref[1]}'
 
 
-out_spi = '/home/evelien/Agri-SiSa/data/output/ERA5land_SPI136_1990_2022_NL.nc' 
+out_spi = '/home/evelien/Agri-SiSa/data/output/ERA5land_SPI136_1990_2022_FIN2.nc' 
 ds_spi_era5land.to_netcdf(out_spi)
 
 #%%
@@ -165,7 +170,7 @@ da_spei1 = xr.DataArray(spei1_tyx_empty,
                                    longitude = ds.coords['longitude'].values),
                        
                        name='SPEI1')
-da_spei1 = da_spi1.astype('float32')  
+da_spei1 = da_spei1.astype('float32')  
 
 da_spei3 = xr.DataArray(spei3_tyx_empty,
                        dims=['time', 'latitude', 'longitude'],
@@ -193,7 +198,22 @@ ds_spei_era5land = xr.merge([da_spei1,
 
 ds_spei_era5land.attrs['source_variable_pev'] = 'pev: ERA5land Monthly Mean Potential Evaporation in mm (org pev * -1000) '
 ds_spei_era5land.attrs['SPEI_function'] = f'R package SPEI,  distibution= {distribution}, SPEI reference period {spei_ref[0]}-{spei_ref[1]}' 
-ds_spei_era5land.attrs['source_variable_tp'] = 'tp: ERA5 Land Expver1 Monthly Mean Total Precipitation in mm (org tp *1000)'
+ds_spei_era5land.attrs['source_variable_tp'] = 'tp: ERA5 Land Monthly Mean Total Precipitation in mm (org tp *1000)'
 
-out_spei = '/home/evelien/Agri-SiSa/data/output/ERA5land_SPEI136_1990_2022_NL.nc' 
+out_spei = '/home/evelien/Agri-SiSa/data/output/ERA5land_SPEI136_1990_2022_FIN2.nc' 
 ds_spei_era5land.to_netcdf(out_spei)
+
+
+#%%
+#check df
+
+test_df = ds_spei_era5land['SPEI1'].to_dataframe()
+waar_inf_spei =test_df[test_df['SPEI1']== np.inf]
+
+df_spei6 = ds_spei_era5land['SPEI6'].to_dataframe()
+waar_spei6_inf = df_spei6[df_spei6['SPEI6']==np.nan]
+df_spi1 = ds_spi_era5land['SPI1'].to_dataframe()
+df_spi1_inf = df_spi1[df_spi1['SPI1']==np.inf]
+#63.1619987487793
+#24.879344940185547
+
