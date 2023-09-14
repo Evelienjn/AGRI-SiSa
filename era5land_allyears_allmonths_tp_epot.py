@@ -17,10 +17,10 @@ lon_min_NL = 3.2
 lon_max_NL = 7.2
 
 
-lat_min_FIN =59.661825
-lat_max_FIN = 65.195894
-lon_min_FIN =  21.079833
-lon_max_FIN =  32.090713
+lat_min_FIN =59.7
+lat_max_FIN = 68
+lon_min_FIN =  19.4
+lon_max_FIN =  31.6
 
 
 #%%
@@ -32,7 +32,7 @@ lon_max = lon_max_FIN
 lat_min = lat_min_FIN
 lat_max = lat_max_FIN
 
-area_selection_shortname = 'FIN'
+area_selection_shortname = 'FIN2'
 start_year = 1959
 end_year = 2023
 
