@@ -1,0 +1,164 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Mon Nov 13 19:51:43 2023
+
+@author: evelien
+
+plot SPEI on cartopy
+
+"""
+import cartopy.feature as cf
+import cartopy.crs as ccrs
+import xarray as xr
+import numpy as np
+import matplotlib.pyplot as plt
+import cartopy as crs
+import os
+import datetime as dt
+
+# %%
+data_fol = '/home/evelien/Agri-SiSa/SPEI'
+
+path_NL = os.path.join(
+    data_fol, '19902022_monthlymean_PenmanMonteith_SPEI136_ERA5land_Netherlands.nc')
+path_FIN = os.path.join(
+    data_fol, '19902022_monthlymean_PenmanMonteith_SPEI136_ERA5land_Finland.nc')
+
+ds_NL = xr.open_dataset(path_NL)
+ds_FIN = xr.open_dataset(path_FIN)
+
+tdry = 360 - 12-6  # juli 2018
+twet = 360 + 6
+# %%
+
+t_index = tdry
+
+
+# First we specify Coordinate Refference System for Map Projection
+# We will use Mercator, which is a cylindrical, conformal projection.
+# It has bery large distortion at high latitudes, cannot
+# fully reach the polar regions.
+projection = ccrs.Mercator()
+
+# Specify CRS, that will be used to tell the code, where should our data be plotted
+crs = ccrs.PlateCarree()
+
+# Now we will create axes object having specific projection
+plt.figure(dpi=150)
+ax = plt.axes(projection=projection, frameon=True)
+
+# Draw gridlines in degrees over Mercator map
+gl = ax.gridlines(crs=crs, draw_labels=True,
+                  linewidth=.6, color='gray', alpha=0.5, linestyle='-.')
+gl.xlabel_style = {"size": 7}
+gl.ylabel_style = {"size": 7}
+
+# To plot borders and coastlines, we can use cartopy feature
+ax.add_feature(cf.COASTLINE.with_scale("50m"), lw=0.5)
+ax.add_feature(cf.BORDERS.with_scale("50m"), lw=0.3)
+
+# Now, we will specify extent of our map in minimum/maximum longitude/latitude
+# Note that these values are specified in degrees of longitude and degrees of latitude
+# However, we can specify them in any crs that we want, but we need to provide appropriate
+# crs argument in ax.set_extent
+lon_min_NL = 3
+lon_max_NL = 7.2
+lat_min_NL = 50.5
+lat_max_NL = 54
+
+cbar_kwargs = {'orientation': 'horizontal',
+               'shrink': 0.6,
+               "pad": .1, 'aspect': 30,
+               'label': f"SPEI3",
+               'ticks': list(np.arange(-3, 3.1, 1)),
+               'extend':'neither'
+               # 'cmap': ' seismic'
+               }
+ds_NL['SPEI3'][tdry].plot(ax=ax,
+                          transform=ccrs.PlateCarree(),
+                          cbar_kwargs=cbar_kwargs,
+                          cmap='seismic_r',
+                          levels=24, vmin=-3, vmax=3,
+                          )
+#ds_NL['SPEI1'][360].plot.contourf(ax=ax, transform=ccrs.PlateCarree(), cbar_kwargs=cbar_kwargs, vmin = -2, vmax = 2, levels = 21)
+#ds_FIN['SPEI1'][360].plot.contourf(ax=ax, transform=ccrs.PlateCarree(), cbar_kwargs=cbar_kwargs, vmin = -2, vmax = 2, levels=21)
+################################
+
+ax.set_extent([lon_min_NL,
+               lon_max_NL,
+               lat_min_NL,
+               lat_max_NL], crs=crs)
+plt.title(f"Netherlands {str(ds_NL['time'][tdry].values)[0:7]}")
+plt.show()
+
+# %%
+
+
+# First we specify Coordinate Refference System for Map Projection
+# We will use Mercator, which is a cylindrical, conformal projection.
+# It has bery large distortion at high latitudes, cannot
+# fully reach the polar regions.
+projection = ccrs.Mercator()
+
+# Specify CRS, that will be used to tell the code, where should our data be plotted
+crs = ccrs.PlateCarree()
+
+#Jokioinen
+lon = 23.47972618466746
+lat = 60.81041115986176
+
+#x, y = projection.as_geodetic(lon, lat)
+
+# Now we will create axes object having specific projection
+plt.figure(dpi=150)
+ax = plt.axes(projection=projection, frameon=True)
+ax.scatter(lon, lat)
+# Draw gridlines in degrees over Mercator map
+gl = ax.gridlines(crs=crs, draw_labels=True,
+                  linewidth=.6, color='gray', alpha=0.5, linestyle='-.')
+gl.xlabel_style = {"size": 7}
+gl.ylabel_style = {"size": 7}
+
+# To plot borders and coastlines, we can use cartopy feature
+ax.add_feature(cf.COASTLINE.with_scale("50m"), lw=0.5)
+ax.add_feature(cf.BORDERS.with_scale("50m"), lw=0.3)
+
+# Now, we will specify extent of our map in minimum/maximum longitude/latitude
+# Note that these values are specified in degrees of longitude and degrees of latitude
+# However, we can specify them in any crs that we want, but we need to provide appropriate
+# crs argument in ax.set_extent
+lon_min_FIN = 20
+lon_max_FIN = 31.75
+lat_min_FIN = 59.75
+lat_max_FIN = 64
+
+cbar_kwargs = {'orientation': 'horizontal',
+               'shrink': 0.6,
+               "pad": .1, 'aspect': 30,
+               'label': f"SPEI3",
+               'ticks': list(np.arange(-3, 3.1, 1)),
+               'extend':'neither'
+               # 'cmap': ' seismic'
+               }
+
+
+ds_FIN['SPEI3'][tdry].plot(ax=ax,
+                           transform=ccrs.PlateCarree(),
+                           cbar_kwargs=cbar_kwargs,
+                           cmap='seismic_r',
+                           levels=24, 
+                           vmin=-3, vmax=3,
+                           )
+#ds_NL['SPEI1'][360].plot.contourf(ax=ax, transform=ccrs.PlateCarree(), cbar_kwargs=cbar_kwargs, vmin = -2, vmax = 2, levels = 21)
+#ds_FIN['SPEI1'][360].plot.contourf(ax=ax, transform=ccrs.PlateCarree(), cbar_kwargs=cbar_kwargs, vmin = -2, vmax = 2, levels=21)
+################################
+
+ax.set_extent([lon_min_FIN,
+               lon_max_FIN,
+               lat_min_FIN,
+               lat_max_FIN], crs=crs)
+
+
+plt.title(f"Finland {str(ds_FIN['time'][tdry].values)[0:7]}")
+plt.show()
